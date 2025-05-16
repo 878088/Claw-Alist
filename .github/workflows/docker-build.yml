@@ -22,6 +22,13 @@ jobs:
       - name: Checkout repository
         uses: actions/checkout@v4
 
+      # 新增Buildx初始化步骤
+      - name: Set up Docker Buildx
+        uses: docker/setup-buildx-action@v2
+        with:
+          driver: docker-container
+          install: true
+
       - name: Log in to the Container registry
         uses: docker/login-action@v3
         with:
@@ -40,6 +47,7 @@ jobs:
             type=ref,event=tag
             type=sha
 
+      # 修改后的构建步骤
       - name: Build and push Docker image
         uses: docker/build-push-action@v5
         with:
@@ -48,5 +56,8 @@ jobs:
           push: ${{ github.ref == 'refs/heads/main' || startsWith(github.ref, 'refs/tags/') }}
           tags: ${{ steps.meta.outputs.tags }}
           labels: ${{ steps.meta.outputs.labels }}
+          # 缓存配置调整
           cache-from: type=gha
           cache-to: type=gha,mode=max
+          # 新增构建参数
+          builder: ${{ steps.buildx.outputs.name }}
